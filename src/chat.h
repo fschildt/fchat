@@ -1,0 +1,3 @@
+struct Chat {
+    int x;
+};
