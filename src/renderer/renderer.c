@@ -41,7 +41,6 @@ static PFNGLVALIDATEPROGRAMPROC glValidateProgram;
 
 static void get_gl_procs()
 {
-    HGLRC glrc = wglGetCurrentContext();
     glClear = (PFNGLCLEARPROC)platform_get_gl_proc("glClear");
     glClearColor = (PFNGLCLEARCOLORPROC)platform_get_gl_proc("glClearColor");
     glViewport = (PFNGLVIEWPORTPROC)platform_get_gl_proc("glViewport");
