@@ -69,5 +69,7 @@ void platform_run_thread(void *(thread_runner)(void *_data), void *data);
  */
 u32 platform_get_random_u32();
 
+bool platform_init();
+
 #endif // PLATFROM_H
 

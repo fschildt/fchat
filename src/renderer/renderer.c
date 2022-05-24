@@ -1,10 +1,9 @@
-#include "../general.h"
-#include "../platform/platform.h"
-#include "../external/stb_truetype.h"
-
 #include "renderer.h"
 
-#include <khronos/glcorearb.h>
+#include "../platform/platform.h"
+#include "../external/stb_truetype.h"
+#include "../external/khronos/glcorearb.h"
+
 #include <stdlib.h>
 
 // misc
@@ -42,6 +41,7 @@ static PFNGLVALIDATEPROGRAMPROC glValidateProgram;
 
 static void get_gl_procs()
 {
+    HGLRC glrc = wglGetCurrentContext();
     glClear = (PFNGLCLEARPROC)platform_get_gl_proc("glClear");
     glClearColor = (PFNGLCLEARCOLORPROC)platform_get_gl_proc("glClearColor");
     glViewport = (PFNGLVIEWPORTPROC)platform_get_gl_proc("glViewport");
@@ -300,3 +300,5 @@ bool renderer_init()
     return true;
 }
 
+#define STB_TRUETYPE_IMPLEMENTATION
+#include "../external/stb_truetype.h"

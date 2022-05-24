@@ -52,7 +52,10 @@ static void render_state(struct State *state)
 
 int main(int argc, char **argv)
 {
-    printf("argv[0] = %s\n", argv[0]);
+    if (!platform_init())
+    {
+        return 0;
+    }
 
     struct Platform_Window *window = platform_create_window("fchat", 1280, 720);
     if (!window)
