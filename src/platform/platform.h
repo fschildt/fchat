@@ -53,10 +53,11 @@ s32 platform_receive(struct Platform_Connection *connection, void *buffer, u64 s
  * I/O
  */
 struct File {
-    u32 size;
     void *buff;
+    u32 size;
 };
 bool platform_read_file(struct File *file, const char *pathname);
+void platform_free_file(struct File *file);
 
 
 /*

@@ -36,6 +36,11 @@ typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXC
 
 char g_path_run_tree[256]; // should be big enough
 
+void platform_free_file(struct File *file)
+{
+    free(file->buff);
+}
+
 bool platform_read_file(struct File *file, const char *pathname)
 {
     int fd = open(pathname, O_RDONLY);

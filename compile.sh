@@ -8,7 +8,7 @@ LFLAGS="-lX11 -ldl -lGL -lm"
 
 SRC_MAIN="src/main.c"
 SRC_PLATFORM="src/platform/lin64/lin64_fchat.c"
-SRC_RENDERER="src/renderer/renderer.c"
+SRC_RENDERER="src/renderer/gl/gl_renderer.c"
 
 mkdir -p build
 $CC $CFLAGS $DFLAGS $SRC_MAIN -o build/main.o

@@ -84,7 +84,13 @@ static void login_process_window_event(struct Login *login, struct Window_Event 
             {
                 u16 val_len = login->lengths[login->index];
                 if (val_len > 0)
-                    login->lengths[login->index] -= 1;
+                {
+                    u16 *length = &login->lengths[login->index];
+                    char *value = login->values[login->index];
+
+                    *length -= 1;
+                    value[*length] = '\0';
+                }
             }
             else
             {
@@ -92,8 +98,13 @@ static void login_process_window_event(struct Login *login, struct Window_Event 
                 char *value  = login->values[login->index];
                 u16  *value_len = &(login->lengths[login->index]);
 
-                value[*value_len] = ch;
-                *value_len += 1;
+                if (*value_len != 127)
+                {
+                    u32 it = *value_len;
+                    value[it] = ch;
+                    value[it+1] = '\0';
+                    *value_len += 1;
+                }
             }
         }
     }
@@ -110,8 +121,9 @@ static void login_init(struct Login *login)
     u16 addr_len = strlen(addr);
     u16 port_len = strlen(port);
 
-    memcpy(login->values[LOGIN_INDEX_ADDR], addr, addr_len);
-    memcpy(login->values[LOGIN_INDEX_PORT], port, port_len);
+    memset(login->values[LOGIN_INDEX_NAME], 0, 1);
+    memcpy(login->values[LOGIN_INDEX_ADDR], addr, addr_len + 1);
+    memcpy(login->values[LOGIN_INDEX_PORT], port, port_len + 1);
 
     login->lengths[LOGIN_INDEX_ADDR] = addr_len;
     login->lengths[LOGIN_INDEX_PORT] = port_len;
