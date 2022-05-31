@@ -119,9 +119,15 @@ int main(int argc, char **argv)
             }
 
             if (state.type == STATE_LOGIN)
+            {
+                printf("login: processing window event\n");
                 login_process_window_event(&state.login, window_event);
+            }
             else
+            {
+                printf("chat: processing window event\n");
                 chat_process_window_event(&state.chat, window_event, state.login.connection);
+            }
         }
 
         // process network events
@@ -143,6 +149,10 @@ int main(int argc, char **argv)
             {
                 printf("connection over\n");
                 running = false;
+            }
+            if (bytes_received == 0)
+            {
+                printf("bytes_received = 0\n");
             }
         }
 

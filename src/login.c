@@ -132,7 +132,7 @@ static void login_init(struct Login *login)
     login->flags = 0;
     login->index = LOGIN_INDEX_NAME;
 
-#if 0
+#if 1
     char addr[] = "130.180.37.50";
 #else
     char addr[] = "192.168.60.160";

@@ -24,7 +24,7 @@ struct Platform_Connection* platform_connect_to_server(const char *address, u16 
     }
     printf("connect(...) success\n");
 
-    u_long mode = 0;
+    u_long mode = 1;
     int result = ioctlsocket(sock, FIONBIO, &mode);
     if (result != NO_ERROR)
     {
@@ -55,6 +55,7 @@ void platform_disconnect_from_server(struct Platform_Connection *connection)
 
 bool platform_send(struct Platform_Connection *connection, void *buffer, u64 size)
 {
+    printf("sending...\n");
     int sent = send(connection->socket_fd, buffer, size, 0);
     printf("sent %d/%llu bytes\n", sent, size);
     return sent >= 0;
@@ -62,6 +63,7 @@ bool platform_send(struct Platform_Connection *connection, void *buffer, u64 siz
 
 s32 platform_receive(struct Platform_Connection *connection, void *buffer, u64 size)
 {
+    printf("receving...\n");
     int recvd = recv(connection->socket_fd, buffer, size, 0);
     printf("recvd %d bytes\n", recvd);
     if (recvd == -1)
