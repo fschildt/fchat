@@ -7,7 +7,7 @@ static void login_process_network_event(struct State *state, struct Login *login
     }
 
     u16 *type = (u16*)buff;
-    printf("buff_len = %d\n", buff_len);
+    printf("login: buff_len = %d\n", buff_len);
     if (buff_len < sizeof(u16))
     {
         printf("message too small\n");
@@ -65,6 +65,7 @@ static void login_process_window_event(struct Login *login, struct Window_Event 
                 struct Platform_Connection *connection = platform_connect_to_server(addr, port_u16);
                 if (!connection)
                 {
+                    printf("login: connection failed\n");
                     login->flags |= LOGIN_FAILED;
                     return;
                 }
@@ -78,6 +79,7 @@ static void login_process_window_event(struct Login *login, struct Window_Event 
                 u8 package[package_size];
                 memcpy(package, &desc, sizeof(desc));
                 memcpy(package + sizeof(desc), login->values[LOGIN_INDEX_NAME], desc.name_len);
+                printf("sending %d bytes\n", package_size);
                 platform_send(login->connection, package, package_size);
                 printf("sent %d bytes\n", package_size);
 
