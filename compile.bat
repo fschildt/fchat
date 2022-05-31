@@ -3,10 +3,10 @@
 set CC=clang
 set CFLAGS=-std=c99 -c
 set DFLAGS=-Wall -g
-set LFLAGS=-lUser32 -lGdi32 -lOpengl32
+set LFLAGS=-lUser32 -lGdi32 -lOpengl32 -lWs2_32.lib
 
 set SRC_MAIN=src\main.c
-set SRC_RENDERER=src\renderer\renderer.c
+set SRC_RENDERER=src\renderer\gl\gl_renderer.c
 set SRC_PLATFORM=src\platform\win32\win32_fchat.c
 
 if NOT EXIST build mkdir build
@@ -16,3 +16,4 @@ if NOT EXIST build mkdir build
 
 %CC% %DFLAGS% build\*.o %LFLAGS% -o build\fchat.exe
 
+copy build\fchat.exe run_tree\
