@@ -45,7 +45,7 @@ struct Platform_Connection* platform_connect_to_server(const char *address, u16 
     printf("connection established\n");
 
     connection->socket_fd = sock;
-    return 0;
+    return connection;
 }
 
 void platform_disconnect_from_server(struct Platform_Connection *connection)
@@ -56,7 +56,7 @@ void platform_disconnect_from_server(struct Platform_Connection *connection)
 bool platform_send(struct Platform_Connection *connection, void *buffer, u64 size)
 {
     int sent = send(connection->socket_fd, buffer, size, 0);
-    printf("sent %d/%d bytes\n", sent, size);
+    printf("sent %d/%llu bytes\n", sent, size);
     return sent >= 0;
 }
 
