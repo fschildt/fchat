@@ -7,6 +7,7 @@ struct Platform_Connection* platform_connect_to_server(const char *address, u16 
         printf("socket() failed, error = %d\n", error);
         return 0;
     }
+    printf("socket() success\n");
 
     struct sockaddr_in server_addr;
     server_addr.sin_family = AF_INET;
@@ -21,6 +22,7 @@ struct Platform_Connection* platform_connect_to_server(const char *address, u16 
         closesocket(sock);
         return 0;
     }
+    printf("connect(...) success\n");
 
     u_long mode = 0;
     int result = ioctlsocket(sock, FIONBIO, &mode);
@@ -31,6 +33,7 @@ struct Platform_Connection* platform_connect_to_server(const char *address, u16 
         closesocket(sock);
         return 0;
     }
+    printf("fcntl() success\n");
 
     struct Platform_Connection *connection = malloc(sizeof(struct Platform_Connection));
     if (!connection)
@@ -39,6 +42,7 @@ struct Platform_Connection* platform_connect_to_server(const char *address, u16 
         closesocket(sock);
         return 0;
     }
+    printf("connection established\n");
 
     connection->socket_fd = sock;
     return 0;
@@ -52,12 +56,14 @@ void platform_disconnect_from_server(struct Platform_Connection *connection)
 bool platform_send(struct Platform_Connection *connection, void *buffer, u64 size)
 {
     int sent = send(connection->socket_fd, buffer, size, 0);
+    printf("sent %d/%d bytes\n", sent, size);
     return sent >= 0;
 }
 
 s32 platform_receive(struct Platform_Connection *connection, void *buffer, u64 size)
 {
     int recvd = recv(connection->socket_fd, buffer, size, 0);
+    printf("recvd %d bytes\n", recvd);
     if (recvd == -1)
     {
         return 0;
@@ -73,5 +79,6 @@ bool platform_init_networking()
         wprintf(L"WSAStartup failed: %d\n", iResult);
         return false;
     }
+    printf("WSAStartup done\n");
     return true;
 }
