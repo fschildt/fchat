@@ -31,7 +31,6 @@ static LRESULT window_proc(HWND window, UINT message, WPARAM w_param, LPARAM l_p
     {
         case WM_CLOSE:
         {
-            printf("window_proc sending message WM_CLOSE\n");
             PostThreadMessage(g_main_thread_id, message, (WPARAM)window, l_param);
         }
         break;
@@ -40,7 +39,6 @@ static LRESULT window_proc(HWND window, UINT message, WPARAM w_param, LPARAM l_p
         case WM_QUIT:
         case WM_SIZE:
         {
-            printf("window_proc sending message WM_CHAR, WM_QUIT, WM_SIZE\n");
             PostThreadMessage(g_main_thread_id, message, w_param, l_param);
         }
         break;
@@ -97,7 +95,6 @@ static HWND create_window(const char *name, int width, int height)
 
 LRESULT win32_service_window_proc(HWND window, UINT message, WPARAM w_param, LPARAM l_param)
 {
-    printf("win32_service_window_proc message = %d\n", message);
 	LRESULT result = 0;
 	switch (message)
 	{
@@ -263,7 +260,6 @@ struct Window_Event *platform_get_window_event(struct Platform_Window *window)
     MSG message;
     if (PeekMessage(&message, 0, 0, 0, PM_REMOVE))
     {
-        printf("any messages?\n");
 #if 0
         if (message.hwnd != window->window)
         {
@@ -396,7 +392,7 @@ void* platform_get_gl_proc(const char *name)
     return address;
 }
 
-bool platform_init()
+bool platform_init_windowing()
 {
     g_main_thread_id = GetCurrentThreadId();
     g_opengl_module = LoadLibraryA("opengl32.dll");

@@ -65,4 +65,9 @@ u32 platform_get_random_u32()
     return 0;
 }
 
-
+bool platform_init()
+{
+    bool b1 = platform_init_windowing();
+    bool b2 = platform_init_networking();
+    return b1 && b2;
+}

@@ -130,7 +130,11 @@ static void login_init(struct Login *login)
     login->flags = 0;
     login->index = LOGIN_INDEX_NAME;
 
-    char addr[] = "127.0.0.1";
+#if 0
+    char addr[] = "130.180.37.50";
+#else
+    char addr[] = "192.168.60.160";
+#endif
     char port[] = "3232";
     u16 addr_len = strlen(addr);
     u16 port_len = strlen(port);
