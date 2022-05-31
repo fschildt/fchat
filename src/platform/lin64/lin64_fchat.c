@@ -7,6 +7,7 @@
 #include <string.h>
 #include <time.h>
 #include <stdlib.h>
+#include <errno.h>
 
 // window
 #include <X11/Xlib.h>

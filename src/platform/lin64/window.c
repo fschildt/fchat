@@ -244,6 +244,13 @@ struct Window_Event *platform_get_window_event(struct Platform_Window *window)
 {
     static struct Window_Event window_event;
 
+    // TODO: flags or completely different way to do this
+    static bool is_caps_lock;
+    static bool is_shift_l;
+    static bool is_shift_r;
+    bool is_uppercase = (is_caps_lock && !(is_shift_l || is_shift_r)) ||
+                         (!is_caps_lock && (is_shift_l || is_shift_r));
+
     if (XPending(window->display))
     {
         XEvent event;
@@ -270,48 +277,74 @@ struct Window_Event *platform_get_window_event(struct Platform_Window *window)
                 int index = 0; // TODO: index could be sth else than 0
                 KeySym keysym = XLookupKeysym(&event.xkey, index);
 
-                if (keysym >= XK_a && keysym <= XK_z)
+                if (keysym == XK_Shift_L)
                 {
-                    window_event.type = WINDOW_KEY;
-                    window_event.e.e_key.ch = keysym - XK_a + 'a';
-                    return &window_event;
+                    is_shift_l = true;
+                    return platform_get_window_event(window);
                 }
-                if (keysym == XK_Tab)
+                else if (keysym == XK_Shift_R)
+                {
+                    is_shift_r = true;
+                    return platform_get_window_event(window);
+                }
+                else if (keysym == XK_Caps_Lock)
+                {
+                    is_caps_lock = true;
+                    return platform_get_window_event(window);
+                }
+
+                else if (keysym >= 32 && keysym <= 126)
+                {
+                    // TODO: XConvertCase doesn't convert to chars like ":{_}+
+                    //       just do them manually
+                    KeySym lower;
+                    KeySym upper;
+                    XConvertCase(keysym, &lower, &upper);
+
+                    window_event.type = WINDOW_KEY;
+                    if (is_uppercase)
+                        window_event.e.e_key.ch = upper;
+                    else
+                        window_event.e.e_key.ch = lower;
+                }
+                else if (keysym == XK_Tab)
                 {
                     window_event.type = WINDOW_KEY;
                     window_event.e.e_key.ch = '\t';
-                    return &window_event;
                 }
-                if (keysym == XK_Return)
+                else if (keysym == XK_Return)
                 {
                     window_event.type = WINDOW_KEY;
                     window_event.e.e_key.ch = '\r';
-                    return &window_event;
                 }
-                if (keysym == XK_space)
-                {
-                    window_event.type = WINDOW_KEY;
-                    window_event.e.e_key.ch = ' ';
-                    return &window_event;
-                }
-                if (keysym >= XK_0 && keysym <= XK_9)
-                {
-                    window_event.type = WINDOW_KEY;
-                    window_event.e.e_key.ch = keysym - XK_0 + '0';
-                    return &window_event;
-                }
-                if (keysym == XK_BackSpace)
+                else if (keysym == XK_BackSpace)
                 {
                     window_event.type = WINDOW_KEY;
                     window_event.e.e_key.ch = 8; // backspace ascii is 8
-                    return &window_event;
                 }
-                // else ignored for now
+                else
+                {
+                    return 0;
+                }
+                return &window_event;
             }
             break;
 
             case KeyRelease:
+            {
+                int index = 0; // TODO: index could be sth else than 0
+                KeySym keysym = XLookupKeysym(&event.xkey, index);
+
+                if (keysym == XK_Shift_L)
+                    is_shift_l = false;
+                else if (keysym == XK_Shift_R)
+                    is_shift_r = false;
+                else if (keysym == XK_Caps_Lock)
+                    is_caps_lock = false;
+                else {}
+
                 //printf("KeyRelease\n");
+            }
             break;
 
             case ButtonPress:

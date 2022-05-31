@@ -11,6 +11,7 @@ struct Platform_Connection;
  */
 
 enum Window_Event_Type {
+    WINDOW_IGNORE,
     WINDOW_RESIZE,
     WINDOW_KEY
 };

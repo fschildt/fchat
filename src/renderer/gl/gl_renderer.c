@@ -7,6 +7,7 @@
 #include <stdlib.h>
 
 static struct Renderer g_renderer;
+static f32 projection[4][4];
 
 // misc
 static PFNGLCLEARCOLORPROC glClearColor;
@@ -178,7 +179,7 @@ static bool create_shader(u32 *shader, const char *vs_src, const char *fs_src)
     return true;
 }
 
-// set the OpenGL orthographic projection matrix
+// set the OpenGL orthographic projection matrix in vertex shader
 void ortho(f32 mat44[4][4], f32 x0, f32 x1, f32 y0, f32 y1, f32 z0, f32 z1)
 {
     mat44[0][0] = 2 / (x1 - x0); 
@@ -212,10 +213,6 @@ void renderer_draw_text(const char *text, f32 x, f32 y)
 
     glUseProgram(font->shader);
 
-    u32 w = 938;
-    u32 h = 1012;
-    f32 projection[4][4];
-    ortho(projection, 0, w, h, 0, 0, 1);
     GLint loc = glGetUniformLocation(font->shader, "u_projection");
     glUniformMatrix4fv(loc, 1, GL_FALSE, &projection[0][0]);
 
@@ -227,7 +224,7 @@ void renderer_draw_text(const char *text, f32 x, f32 y)
 
     while (*text)
     {
-        if (*text >= 32 && *text < 128)
+        if (*text >= 32 && *text <= 127)
         {
             stbtt_aligned_quad q;
             stbtt_GetBakedQuad(font->baked_chars, 512, 512, *text-32, &x, &y, &q, 1);
@@ -278,7 +275,7 @@ bool renderer_setup_text_drawing(u8 *ttf_buff, const char *vs_src, const char *f
     // font texture
     glActiveTexture(GL_TEXTURE0);
     u8 tmp_bitmap[512*512];
-    stbtt_BakeFontBitmap(ttf_buff, 0, 64.0, tmp_bitmap, 512, 512, 32, 96, font->baked_chars);
+    stbtt_BakeFontBitmap(ttf_buff, 0, 32.0, tmp_bitmap, 512, 512, 32, 96, font->baked_chars);
     glGenTextures(1, &font->texture);
     glBindTexture(GL_TEXTURE_2D, font->texture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 512, 512, 0, GL_RED, GL_UNSIGNED_BYTE, tmp_bitmap);
@@ -299,7 +296,13 @@ void renderer_draw_color(f32 r, f32 g, f32 b)
 
 void renderer_viewport(s32 x, s32 y, s32 width, s32 height)
 {
+    ortho(projection, 0, width, height, 0, 0, 1);
     glViewport(x, y, width, height);
+}
+
+stbtt_bakedchar* renderer_get_stbtt_baked_chars()
+{
+    return g_renderer.font.baked_chars;
 }
 
 bool renderer_init()

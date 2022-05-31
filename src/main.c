@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "external/stb_truetype.h"
 #include "platform/platform.h"
 #include "renderer/renderer.h"
 
@@ -14,6 +15,7 @@ enum State_Type {
 
 static void state_change(struct State *state, enum State_Type type);
 
+#include "external/fcp/fcp.h"
 #include "login.h"
 #include "chat.h"
 
@@ -21,7 +23,7 @@ static void state_change(struct State *state, enum State_Type type);
 #include "chat.c"
 
 struct Assets {
-    struct File font_buff;
+    struct File font;
     struct File font_vs;
     struct File font_fs;
 };
@@ -33,7 +35,7 @@ struct State {
     struct Chat chat;
 };
 
-static void render_state(struct State *state)
+static void renderer_draw_state(struct State *state, s32 window_width, s32 window_height)
 {
     if (state->type == STATE_LOGIN)
     {
@@ -43,15 +45,20 @@ static void render_state(struct State *state)
         renderer_draw_text(l->values[1], 200, 400);
         renderer_draw_text(l->values[2], 200, 600);
     }
+    else if (state->type == STATE_CHAT)
+    {
+        struct Chat *chat = &state->chat;
+        draw_chat(chat, window_width, window_height);
+    }
     else
     {
-        renderer_draw_color(0.3, 0.5, 0.7);
+        renderer_draw_text("illegal state", 200, 200);
     }
 }
 
 static bool load_assets(struct Assets *assets)
 {
-    if (!platform_read_file(&assets->font_buff, "./fonts/cruft/cruft.ttf") ||
+    if (!platform_read_file(&assets->font, "./fonts/cruft/cruft.ttf") ||
         !platform_read_file(&assets->font_vs, "./shader/font.vs") ||
         !platform_read_file(&assets->font_fs, "./shader/font.fs"))
     {
@@ -91,7 +98,10 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    renderer_setup_text_drawing(state.assets.font_buff.buff, state.assets.font_vs.buff, state.assets.font_fs.buff);
+    renderer_setup_text_drawing(state.assets.font.buff, state.assets.font_vs.buff, state.assets.font_fs.buff);
+
+    s32 window_width = 0;
+    s32 window_height = 0;
 
     bool running = true;
     while (running)
@@ -100,25 +110,34 @@ int main(int argc, char **argv)
         struct Window_Event *window_event;
         while ((window_event = platform_get_window_event(window)))
         {
+            if (window_event->type == WINDOW_RESIZE)
+            {
+                window_width  = window_event->e.e_resize.width;
+                window_height = window_event->e.e_resize.height;
+                renderer_viewport(0, 0, window_width, window_height);
+                continue;
+            }
+
             if (state.type == STATE_LOGIN)
                 login_process_window_event(&state.login, window_event);
             else
-                chat_process_window_event(&state.chat, window_event);
+                chat_process_window_event(&state.chat, window_event, state.login.connection);
         }
 
         // process network events
-        if (state.login.flags & LOGIN_SUCCESS)
+        if (state.login.flags & (LOGIN_SUCCESS | LOGIN_WAITING))
         {
             struct Platform_Connection *connection = state.login.connection;
 
-            char buff[256];
             s32 bytes_received;
-            while ((bytes_received = platform_receive(connection, buff, 256) > 0))
+            u8 buff[256];
+            while (((bytes_received = platform_receive(connection, buff, 256)) > 0))
             {
+                printf("bytes_received = %d\n", bytes_received);
                 if (state.type == STATE_LOGIN)
                     login_process_network_event(&state, &state.login, buff, bytes_received);
                 else
-                    chat_process_network_event(&state.chat, (u8*)buff, bytes_received);
+                    chat_process_network_event(&state.chat, buff, bytes_received);
             }
             if (bytes_received < 0)
             {
@@ -128,7 +147,7 @@ int main(int argc, char **argv)
         }
 
         // draw state
-        render_state(&state);
+        renderer_draw_state(&state, window_width, window_height);
         platform_swap_buffers(window);
     }
 

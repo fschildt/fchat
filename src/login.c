@@ -1,4 +1,4 @@
-static void login_process_network_event(struct State *state, struct Login *login, const char *buff, u32 buff_len)
+static void login_process_network_event(struct State *state, struct Login *login, u8 *buff, u32 buff_len)
 {
     if (!(login->flags & LOGIN_WAITING))
     {
@@ -6,17 +6,40 @@ static void login_process_network_event(struct State *state, struct Login *login
         return;
     }
 
-    if (buff_len != 1 || buff[0] == 0)
+    u16 *type = (u16*)buff;
+    printf("buff_len = %d\n", buff_len);
+    if (buff_len < sizeof(u16))
     {
-        printf("invalid server message in login");
+        printf("message too small\n");
         return;
+    }
+
+    if (*type == FCP_S_STATUS)
+    {
+        struct FCP_S_Status *status = (struct FCP_S_Status*)buff;
+        if (buff_len < sizeof(struct FCP_S_Status))
+        {
+            printf("message too small for status\n");
+            return;
+        }
+
+        if (status->status == FCP_S_SUCCESS)
+        {
+            printf("changing state from login to chat\n");
+            login->flags ^= LOGIN_WAITING;
+            login->flags |= LOGIN_SUCCESS;
+            state_change(state, STATE_CHAT);
+        }
+        else
+        {
+            // TODO: proper behaviour
+            printf("login unsuccessful\n");
+        }
     }
     else
     {
-        printf("changing state from login to chat\n");
-        login->flags ^= LOGIN_WAITING;
-        login->flags |= LOGIN_SUCCESS;
-        state_change(state, STATE_CHAT);
+        printf("invalid serer message in login\n");
+        return;
     }
 }
 
@@ -24,13 +47,7 @@ static void login_process_window_event(struct Login *login, struct Window_Event 
 {
     enum Window_Event_Type type = event->type;
 
-    if (type == WINDOW_RESIZE)
-    {
-        s32 width  = event->e.e_resize.width;
-        s32 height = event->e.e_resize.height;
-        renderer_viewport(0, 0, width, height);
-    }
-    else if (type == WINDOW_KEY)
+    if (type == WINDOW_KEY)
     {
         char ch = event->e.e_key.ch;
 
@@ -42,26 +59,27 @@ static void login_process_window_event(struct Login *login, struct Window_Event 
         {
             if (ch == '\r')
             {
-                char *addr = login->values[LOGIN_INDEX_ADDR];
-                char *port = login->values[LOGIN_INDEX_PORT];
-                u16 addr_len = login->lengths[LOGIN_INDEX_ADDR];
-                u16 port_len = login->lengths[LOGIN_INDEX_PORT];
+                u16 port_u16 = atoi(login->values[LOGIN_INDEX_PORT]);
+                const char *addr = login->values[LOGIN_INDEX_ADDR];
 
-                addr[addr_len] = '\0';
-                port[port_len] = '\0';
-                u16 port_real = atoi(port);
-
-                struct Platform_Connection *connection = platform_connect_to_server(addr, port_real);
+                struct Platform_Connection *connection = platform_connect_to_server(addr, port_u16);
                 if (!connection)
                 {
                     login->flags |= LOGIN_FAILED;
                     return;
                 }
                 login->connection = connection;
+                
+                struct FCP_C_Login_Desc desc;
+                desc.type = FCP_C_LOGIN;
+                desc.name_len = login->lengths[LOGIN_INDEX_NAME];
 
-                char *name   = login->values[LOGIN_INDEX_NAME];
-                u16 name_len = login->lengths[LOGIN_INDEX_NAME];
-                platform_send(login->connection, name, name_len);
+                u32 package_size = sizeof(desc) + desc.name_len;
+                u8 package[package_size];
+                memcpy(package, &desc, sizeof(desc));
+                memcpy(package + sizeof(desc), login->values[LOGIN_INDEX_NAME], desc.name_len);
+                platform_send(login->connection, package, package_size);
+                printf("sent %d bytes\n", package_size);
 
                 login->flags |= LOGIN_WAITING;
                 printf("login now waiting for server\n");
@@ -75,10 +93,7 @@ static void login_process_window_event(struct Login *login, struct Window_Event 
             }
             else if (ch == ' ')
             {
-                char *val   = login->values[login->index];
-                u16 val_len = login->lengths[login->index];
-                val[val_len] = '\0';
-                printf("value(%d) = %s\n", login->index, val);
+                printf("not allowing space here\n");
             }
             else if (ch == 8)
             {
@@ -94,7 +109,6 @@ static void login_process_window_event(struct Login *login, struct Window_Event 
             }
             else
             {
-                printf("editing tab\n");
                 char *value  = login->values[login->index];
                 u16  *value_len = &(login->lengths[login->index]);
 

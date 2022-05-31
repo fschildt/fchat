@@ -52,7 +52,11 @@ bool platform_send(struct Platform_Connection *connection, void *buffer, u64 siz
 
 s32 platform_receive(struct Platform_Connection *connection, void *buffer, u64 size)
 {
-    ssize_t received = recv(connection->socket_fd, buffer, size, 0);
-    return received;
+    ssize_t recvd = recv(connection->socket_fd, buffer, size, 0);
+    if (recvd == -1)
+    {
+        return 0;
+    }
+    return recvd;
 }
 
